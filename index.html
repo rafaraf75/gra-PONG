@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+    <head>
+        <title>GRA</title>
+        <meta content="text/html" charset="utf-8" http-equiv="Content-Type"/>
+        <meta content="utf-8" http-equiv="encoding"/>
+    </head>
+
+    <body>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <script>
+            let canvas, canvasContext
+            let ballX = 400
+            let ballY = 300
+            let ballSpeedX =  3
+            let ballSpeedY =  0
+
+            let paddle1Y = 300
+            let paddle2Y = 300
+            const paddleHeigh = 100
+            const paddleDistFromEdge = 10
+            const paddleThickness = 10
+
+            let playerScore = 0
+            let computerScore = 0
+            const winningScore = 3
+
+            let playingGame = true
+
+            window.onload = () => {
+                canvas = document.querySelector("#gameCanvas")
+                canvasContext = canvas.getContext("2d")
+
+                canvas.addEventListener("mousedown", handleMouseClick)
+
+                canvas.addEventListener("mousemove", (e) => {
+                    let mousePos = calculateMousePosition(e)
+                    paddle1Y = mousePos.y - paddleHeigh / 2
+                })
+
+                setInterval(() => {
+                    moveEverything()
+                    drawEverything()
+                }, 1000/60)
+            
+            }
+
+            const handleMouseClick = () => {
+                if(!playingGame) {
+                    playingGame = true
+                    playerScore = 0
+                    computerScore = 0
+                }
+
+            }
+            const ballReset = () => {
+                if(playerScore >= winningScore ||
+                 computerScore >= winningScore
+                 ) {                   
+                    playingGame = false
+                }
+                ballSpeedX = -ballSpeedX
+                ballSpeedY = 0
+                ballX = canvas.width / 2
+                ballY = canvas.height / 2
+            }
+
+            const calculateMousePosition = (event) => {
+                let gameRect = canvas.getBoundingClientRect()
+                let root = document.documentElement
+
+                let mouseX = event.clientX - gameRect.left - root.scrollLeft
+                let mouseY = event.clientY - gameRect.top - root.scrollTop
+
+                return {x: mouseX, y: mouseY}
+            }
+
+            const computerMovement = () => {
+                let paddleCenter = paddle2Y + paddleHeigh / 2
+                if(paddleCenter < ballY - 35) {
+                    paddle2Y += 6
+                } else if(paddleCenter > ballY + 35) {
+                    paddle2Y -= 6
+                }
+            }
+
+
+            const moveEverything = () => {
+                if(!playingGame) {
+                    return
+                }
+                computerMovement()
+
+                ballX += ballSpeedX
+                ballY += ballSpeedY
+                
+                if(ballY < 0) {
+                    ballSpeedY = -ballSpeedY
+                }               
+                if(ballY > canvas.height) {
+                    ballSpeedY = -ballSpeedY
+                }
+                if(ballX < 0) {
+                    computerScore ++
+                    ballReset()     
+                }
+                if(ballX > canvas.width) {
+                    playerScore ++
+                    ballReset()
+                }
+
+            let playerPaddleTop = paddle1Y
+            let playerPaddleBottom = paddle1Y + paddleHeigh
+            let playerPaddleLeft = paddleDistFromEdge
+            let playerPaddleRight =  paddleDistFromEdge + paddleThickness
+
+            if( ballY >= playerPaddleTop && 
+                ballY <= playerPaddleBottom && 
+                ballX >= playerPaddleLeft && 
+                ballX <= playerPaddleRight) {
+                ballSpeedX = -ballSpeedX
+                let diffY = ballY - (paddle1Y + paddleHeigh / 2)
+                ballSpeedY = diffY * 0.33
+            }
+
+            let oponentPaddleTop = paddle2Y
+            let oponentPaddleBottom = paddle2Y + paddleHeigh
+            let oponentPaddleLeft = canvas.width - paddleDistFromEdge - paddleThickness
+            let oponentPaddleRight = canvas.width - paddleDistFromEdge 
+
+            if( ballY >= oponentPaddleTop && 
+                ballY <= oponentPaddleBottom && 
+                ballX >= oponentPaddleLeft && 
+                ballX <= oponentPaddleRight) {
+                ballSpeedX = -ballSpeedX
+                let diffY = ballY - (paddle2Y + paddleHeigh / 2)
+                ballSpeedY = diffY * 0.33
+            }
+        }
+
+            const drawEverything = () => {
+
+                //narysuj tło i odśwież ekran
+                drawRectangle(0, 0, canvas.width, canvas.height, "black")
+
+                if(!playingGame) {
+                    canvasContext.fillStyle = "white"
+                    if(playerScore >= winningScore) {
+                        canvasContext.fillText("Wygrałeś!", 350, 200)
+                    } else if(computerScore >= winningScore) {
+                        canvasContext.fillText("Przegrałeś!", 350, 200)
+                    }
+                    canvasContext.fillText("Kliknij aby zagrać ponownie", 350, 300)
+                    return
+                }
+
+                //narysuj piłkę
+                drawCircle(ballX, ballY, 10, "red")
+
+                //narysuj rakietkę gracza
+                drawRectangle(paddleDistFromEdge, paddle1Y, paddleThickness, paddleHeigh, "white")
+
+                //narysuj rakietkę komputera
+                drawRectangle(canvas.width - paddleThickness - paddleDistFromEdge, paddle2Y, paddleThickness, paddleHeigh, "white")
+                
+                canvasContext.fillText(playerScore, 100, 100)
+                canvasContext.fillText(computerScore, 700, 100) 
+            }
+
+            const drawRectangle = (posX, posY, width, height, color) => {
+                canvasContext.fillStyle = color
+                canvasContext.fillRect(posX, posY, width, height)
+            }
+
+            const drawCircle = (centerX, centerY, radius, color) => {
+                canvasContext.fillStyle = color
+                canvasContext.beginPath()
+                canvasContext.arc(centerX, centerY, radius, 0, Math.PI * 2)
+                canvasContext.fill()
+            }
+        </script>
+    </body>
+</html>
